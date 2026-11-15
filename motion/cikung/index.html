@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<!-- Made with the Bang Motion skill (https://github.com/bangtutorial/bang-motion) - MIT -->
+<head>
+<meta charset="utf-8">
+<title>Cikung motion</title>
+<!--
+  STYLE BRIEF
+  Theme + feeling   : Cikung, a cat that lives in the notch / warm, playful, calm
+  Concepts          : 1 one continuous shot  / 9 one feature demoed / 5 journey inside the UI  -> chosen: 1
+                      (Cikung's whole idea is "it lives in the notch", so the notch itself is the stage)
+  Fingerprint       : one continuous shot · 5 moments · notch (pill > music > focus > agent toast > pill) ·
+                      cursor touches a black pill at the top edge · cat + wordmark, notch back to a pill (loops)
+  Palette           : paper #E6E3D9 (Cikung tokens --color-paper) / ink #120F0C (--color-ink) /
+                      orange #FB7500 (--color-accent-2); notch #0B0B0C (product UI)
+  Fonts             : Anybody (Cikung website display font) / Figtree (Cikung app UI font)
+  Text emphasis     : none; weight + position only
+  Background        : warm paper with two drifting orange light pools + live grain (techniques 7c "gradient drift")
+  Motion signature  : the notch blooms and folds with an elastic overshoot
+  Render family     : flat (the real Cikung art) + real UI rebuilt in HTML
+  Transitions       : carried by the notch morph; no cuts
+  Special moment    : agent finishes -> orange pulse from the notch, the cat face pops, the light pools swell
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@75..150,500..900&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<style>
+:root{
+  --paper:#E6E3D9; --paper-3:#CDC7B8; --ink:#120F0C; --muted:#5B5249;
+  --orange:#FB7500; --notch:#0B0B0C; --ui:#EDEDED; --ui-2:#9A9A9A; --chip:#1E1E1E;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;overflow:hidden}
+#filters{position:fixed;width:0;height:0}
+#stage{position:fixed;left:50%;top:50%;width:1920px;height:1080px;transform:translate(-50%,-50%);
+  overflow:hidden;background:var(--paper);font-family:"Figtree",sans-serif}
+#world{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;will-change:transform}
+
+/* background: paper + drifting light pools + grain; extends past the frame so the camera never sees an edge */
+.bg{position:absolute;left:-700px;top:0;width:3320px;height:1800px;
+  background:linear-gradient(180deg,#ECE9E0 0%,var(--paper) 40%,var(--paper-3) 100%)}
+.pool{position:absolute;border-radius:50%;pointer-events:none}
+#pool1{width:1500px;height:1500px;left:-300px;top:280px;
+  background:radial-gradient(circle,rgba(251,117,0,.30) 0%,rgba(251,117,0,.10) 38%,transparent 66%)}
+#pool2{width:1300px;height:1300px;left:1150px;top:-420px;
+  background:radial-gradient(circle,rgba(255,170,90,.32) 0%,rgba(255,170,90,.10) 40%,transparent 68%)}
+.grain{position:absolute;left:-700px;top:-200px;width:3320px;height:2000px;opacity:.20;mix-blend-mode:multiply;pointer-events:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .2  0 0 0 0 .16  0 0 0 0 .12  0 0 0 .55 0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>")}
+/* the monitor bezel above the screen edge (seen only when the camera dips) */
+.bezel{position:absolute;left:-700px;top:-600px;width:3320px;height:600px;background:#141210}
+
+/* ---------- the notch ---------- */
+#notch{position:absolute;left:960px;top:0;width:300px;height:54px;transform:translateX(-50%);
+  background:var(--notch);border-radius:0 0 27px 27px;overflow:hidden;color:var(--ui);
+  box-shadow:0 18px 50px rgba(18,15,12,.28)}
+#ring{position:absolute;left:960px;top:0;width:300px;height:54px;transform:translateX(-50%);
+  border-radius:0 0 30px 30px;border:5px solid var(--orange);border-top:none;opacity:0;pointer-events:none}
+.pane{position:absolute;left:0;top:0;opacity:0}
+.face{display:block;border-radius:50%}
+#pillrow{left:0;top:0;width:300px;height:54px;display:flex;align-items:center;gap:12px;padding:0 22px;opacity:1}
+#pillrow .face{width:34px;height:34px}
+#pillrow b{font-weight:600;font-size:22px;margin-left:auto;font-variant-numeric:tabular-nums}
+
+.topbar{position:absolute;left:40px;right:40px;top:28px;display:flex;align-items:center;gap:16px;font-size:27px;font-weight:600}
+.topbar .face{width:46px;height:46px}
+.topbar span.r{margin-left:auto;font-variant-numeric:tabular-nums}
+.topbar i{font-style:normal;color:var(--ui-2);font-weight:500}
+
+/* music */
+#music{width:1180px;height:440px}
+#cover{position:absolute;left:40px;top:108px;width:150px;height:150px;border-radius:26px;background:#2A1E14;
+  display:flex;align-items:center;justify-content:center;gap:9px}
+#cover s{display:block;width:9px;border-radius:5px;background:var(--orange);height:40px}
+#m-title{position:absolute;left:220px;top:112px;font-size:44px;font-weight:600}
+#m-sub{position:absolute;left:220px;top:170px;font-size:28px;color:var(--ui-2)}
+#m-state{position:absolute;left:220px;top:216px;font-size:24px;color:var(--ui-2)}
+#m-state em{font-style:normal;color:#F0902A;margin-right:14px}
+#bar{position:absolute;left:40px;top:296px;width:600px;height:9px;border-radius:5px;background:#353535;overflow:hidden}
+#barfill{width:30%;height:100%;background:#EEE;border-radius:5px}
+.tm{position:absolute;top:316px;font-size:21px;color:var(--ui-2);font-variant-numeric:tabular-nums}
+#ctr{position:absolute;left:140px;top:348px;display:flex;gap:26px;align-items:center}
+#ctr u{display:flex;align-items:center;justify-content:center;width:70px;height:70px;border-radius:50%;background:var(--chip)}
+#ctr u.big{width:88px;height:88px;background:#8C8C8C}
+#ctr svg{fill:#ddd}
+#vline{position:absolute;left:690px;top:108px;width:2px;height:290px;background:#262626}
+#lyr-l{position:absolute;left:730px;top:110px;font-size:18px;letter-spacing:.18em;color:var(--ui-2);font-weight:600}
+#lyr{position:absolute;left:730px;top:150px;width:410px;height:250px;overflow:hidden;
+  -webkit-mask:linear-gradient(180deg,transparent,#000 22%,#000 70%,transparent)}
+#lyr-col{position:absolute;left:0;top:70px}
+#lyr-col p{height:22px;border-radius:11px;background:#3A3A3A;margin-bottom:24px}
+
+/* focus */
+#focus{width:920px;height:520px}
+#f-title{position:absolute;left:40px;top:104px;font-size:44px;font-weight:600}
+#f-sub{position:absolute;left:40px;top:162px;font-size:24px;color:var(--ui-2)}
+.chips{position:absolute;left:40px;display:flex;gap:14px}
+.chips span{padding:10px 22px;border-radius:10px;background:var(--chip);font-size:24px;font-weight:500}
+.chips span.on{background:#6B4421}
+#f-mode{top:212px}
+#f-time{position:absolute;left:34px;top:262px;font-size:170px;font-weight:400;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1}
+#f-btns{top:448px}
+#f-start{position:relative}
+
+/* agent toast */
+#agent{width:600px;height:104px;display:flex;align-items:center;gap:18px;padding:0 30px}
+#agent .face{width:62px;height:62px}
+#agent b{font-size:30px;font-weight:600}
+#agent small{display:block;font-size:20px;color:var(--ui-2);font-weight:500}
+#check{margin-left:auto;width:58px;height:58px}
+
+/* captions */
+.cap{position:absolute;font-family:"Anybody",sans-serif;font-stretch:112%;font-weight:600;font-size:96px;
+  color:var(--ink);white-space:nowrap;letter-spacing:-.01em;line-height:1.05;opacity:0}
+.wd{display:inline-block;white-space:nowrap}
+.ch{display:inline-block;opacity:0;will-change:transform,opacity}
+
+/* ending */
+#mark{position:absolute;left:130px;top:480px;font-family:"Anybody",sans-serif;font-stretch:125%;font-weight:900;
+  font-size:236px;color:var(--ink);letter-spacing:-.02em;line-height:1;opacity:0}
+#meta{position:absolute;left:146px;top:750px;font-size:46px;font-weight:600;color:var(--muted);opacity:0}
+#cat{position:absolute;left:1380px;top:300px;width:480px;height:773px;transform-origin:50% 100%;opacity:0}
+#cat img{position:absolute;left:0;top:0;width:480px;height:773px}
+#cat .tail{transform-origin:62% 82%}
+#cat .head{transform-origin:50% 62%}
+
+#cursor{position:absolute;left:0;top:0;width:52px;height:52px;opacity:0}
+
+#labels{position:absolute;inset:0;pointer-events:none}
+#ui{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:none;gap:12px;align-items:center;
+  padding:10px 16px;border-radius:14px;background:rgba(14,16,22,.9);color:#aaa;font:13px sans-serif;z-index:9}
+#ui.on{display:flex}#ui input{width:360px}
+</style>
+</head>
+<body>
+<svg id="filters"><defs></defs></svg>
+<div id="stage">
+  <div id="world">
+    <div class="bg"></div>
+    <div class="pool" id="pool1"></div>
+    <div class="pool" id="pool2"></div>
+    <div class="grain" id="grain"></div>
+    <div class="bezel"></div>
+
+
+    <div id="mark"><span class="txt">Cikung</span></div>
+    <div id="meta">Windows · Mac</div>
+    <div id="cat">
+      <img class="tail" src="assets/orange-tail.webp" alt="">
+      <img class="body" src="assets/orange-body.webp" alt="">
+      <img class="head" src="assets/orange-head.webp" alt="">
+    </div>
+
+    <div id="ring"></div>
+    <div id="notch">
+      <div class="pane" id="pillrow"><img class="face" src="assets/face-orange.webp" alt=""><b>14:50</b></div>
+
+      <div class="pane" id="music">
+        <div class="topbar"><img class="face" src="assets/face-orange.webp" alt="">Cikung <i>/ Music</i><span class="r">14:50</span></div>
+        <div id="cover"><s></s><s></s><s></s><s></s><s></s><s></s><s></s></div>
+        <div id="m-title">A little sunshine</div>
+        <div id="m-sub">Cikung's listening room</div>
+        <div id="m-state"><em>Playing</em>Spotify</div>
+        <div id="bar"><div id="barfill"></div></div>
+        <div class="tm" style="left:40px" id="t-now">1:15</div>
+        <div class="tm" style="left:580px" id="t-left">-2:30</div>
+        <div id="ctr">
+          <u><svg width="26" height="26" viewBox="0 0 24 24"><path d="M6 5h2.5v14H6zM19 5v14L9.5 12z"/></svg></u>
+          <u class="big"><svg width="32" height="32" viewBox="0 0 24 24"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z"/></svg></u>
+          <u><svg width="26" height="26" viewBox="0 0 24 24"><path d="M15.5 5H18v14h-2.5zM5 5l9.5 7L5 19z"/></svg></u>
+        </div>
+        <div id="vline"></div>
+        <div id="lyr-l">LYRICS</div>
+        <div id="lyr"><div id="lyr-col">
+          <p style="width:330px"></p><p style="width:250px"></p><p style="width:380px"></p><p style="width:290px"></p>
+          <p style="width:350px"></p><p style="width:220px"></p><p style="width:360px"></p><p style="width:270px"></p>
+          <p style="width:320px"></p><p style="width:240px"></p>
+        </div></div>
+      </div>
+
+      <div class="pane" id="focus">
+        <div class="topbar"><img class="face" src="assets/face-orange.webp" alt="">Cikung <i>/ Focus</i><span class="r">14:50</span></div>
+        <div id="f-title">A little room to focus</div>
+        <div id="f-sub">One thing at a time. Cikung will keep the clock.</div>
+        <div class="chips" id="f-mode"><span class="on">Focus</span><span>Break</span></div>
+        <div id="f-time">25:00</div>
+        <div class="chips" id="f-btns"><span id="f-start">Start</span><span>Reset</span><span>5 min</span><span>15 min</span><span>25 min</span><span>50 min</span></div>
+      </div>
+
+      <div class="pane" id="agent">
+        <img class="face" src="assets/face-orange.webp" alt="">
+        <div><b>Claude App</b><small>Cikung</small></div>
+        <svg id="check" viewBox="0 0 58 58"><circle cx="29" cy="29" r="27" fill="#2E9E5B"/>
+          <path id="tick" d="M17 30l8 8 16-17" fill="none" stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="40" stroke-dashoffset="40"/></svg>
+      </div>
+    </div>
+
+    <svg id="cursor" viewBox="0 0 24 24"><path d="M4 2.5l15.5 11-7 .9 4.2 7.3-3 1.6-4.2-7.4L4 20.5z" fill="#111" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>
+  </div>
+  <div id="labels">
+    <div class="cap" id="cap1" style="left:960px;top:640px;transform:translateX(-50%)"><span class="txt">Lyrics that keep up</span></div>
+    <div class="cap" id="cap2" style="left:110px;top:920px;font-size:90px"><span class="txt">Focus, one hover away</span></div>
+    <div class="cap" id="cap3" style="left:960px;top:430px;transform:translateX(-50%);font-size:84px"><span class="txt">Pings you when your agent is done</span></div>
+  </div>
+</div>
+<div id="ui"><input id="scrub" type="range" min="0" max="1000" value="0"><span id="clock">0.00s</span></div>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const Q=new URLSearchParams(location.search);
+
+/* ---- directional motion blur + per-letter split (from the starter) ---- */
+const defs=$('#filters defs'); let fc=0;
+function makeBlur(){const id='mb'+(fc++),NS='http://www.w3.org/2000/svg';
+  const f=document.createElementNS(NS,'filter');f.id=id;f.setAttribute('x','-70%');f.setAttribute('y','-70%');
+  f.setAttribute('width','240%');f.setAttribute('height','240%');
+  const g=document.createElementNS(NS,'feGaussianBlur');g.setAttribute('stdDeviation','0 0');f.appendChild(g);defs.appendChild(f);
+  return {url:`url(#${id})`,node:g};}
+function blurTween(tl,el,at,from,to,dur,{ease='power3.out',ax=1,ay=.08}={}){const b=makeBlur(),o={v:from};
+  tl.set(el,{filter:b.url},at);
+  tl.to(o,{v:to,duration:dur,ease,onUpdate(){b.node.setAttribute('stdDeviation',`${(o.v*ax).toFixed(2)} ${(o.v*ay).toFixed(2)}`);}},at);
+  tl.set(el,{filter:'none'},at+dur);}
+function splitChars(el){const words=(el.textContent||'').split(' ');el.textContent='';const out=[];
+  words.forEach((w,i)=>{const wr=document.createElement('span');wr.className='wd';
+    for(const c of w){const s=document.createElement('span');s.className='ch';s.textContent=c;wr.appendChild(s);out.push(s);}
+    el.appendChild(wr);if(i<words.length-1){const sp=document.createElement('span');sp.className='ch';sp.innerHTML='&nbsp;';el.appendChild(sp);out.push(sp);}});
+  return out;}
+const VERT={ax:.1,ay:1};
+
+const DURATION=12;
+const tl=gsap.timeline({paused:true});
+
+/* camera: point (cx,cy) of the world is placed at the frame centre, scaled by s */
+const CAM={cx:960,cy:540,s:1};
+const cam=(at,dur,v,ease='power3.inOut')=>tl.to(CAM,{...v,duration:dur,ease},at);
+const topCam=s=>({s,cx:960,cy:540/s});   // keeps the screen's top edge pinned to the frame
+
+/* notch shapes (the motion signature: bloom with an elastic overshoot, fold back the same way) */
+const N=$('#notch'), RING=$('#ring');
+const shape=(w,h,r)=>({width:w,height:h,borderBottomLeftRadius:r,borderBottomRightRadius:r});
+const bloom=(at,w,h,r,dur=.75)=>tl.to(N,{...shape(w,h,r),duration:dur,ease:'elastic.out(1,.62)'},at);
+const fold =(at,dur=.5)=>tl.to(N,{...shape(300,54,27),duration:dur,ease:'back.inOut(1.6)'},at);
+
+/* cursor */
+const CUR=$('#cursor');
+const moveCur=(at,dur,x,y,ease='power2.inOut')=>tl.to(CUR,{x,y,duration:dur,ease},at);
+const click=at=>{tl.to(CUR,{scale:.82,duration:.08,ease:'power2.in',transformOrigin:'15% 10%'},at);
+  tl.to(CUR,{scale:1,duration:.22,ease:'back.out(3)'},at+.08);};
+
+/* pane in/out */
+const paneIn=(el,at)=>{tl.set(el,{opacity:1},at);
+  tl.fromTo(el.children,{opacity:0,y:18},{opacity:1,y:0,duration:.45,ease:'power3.out',stagger:.035,immediateRender:false},at);};
+const paneOut=(el,at)=>{tl.to(el,{opacity:0,duration:.18,ease:'power1.in'},at);tl.set(el.children,{clearProps:'transform'},at+.2);};
+
+/* captions: three different doors, three different positions */
+const cap=id=>{const el=$(id);return {el,ch:splitChars($('.txt',el))};};
+const C1=cap('#cap1'),C2=cap('#cap2'),C3=cap('#cap3'),MK={el:$('#mark'),ch:splitChars($('#mark .txt'))};
+
+/* ===== starting state (also the end state, so the loop closes) ===== */
+tl.set(N,shape(300,54,27),0);
+tl.set('#pillrow',{opacity:1},0);
+tl.set(CUR,{x:1560,y:980,opacity:1,scale:1},0);
+tl.set(CAM,{cx:960,cy:540,s:1},0);
+
+/* 0.2 - 1.3  the cursor reaches for the black pill at the top edge */
+moveCur(.2,1.1,975,22,'power3.inOut');
+cam(.2,1.2,topCam(1.06));
+click(1.3);
+
+/* 1.35 - 4.1  music */
+tl.to('#pillrow',{opacity:0,duration:.12},1.32);
+bloom(1.36,1180,440,48);
+paneIn($('#music'),1.62);
+cam(1.4,1.0,topCam(1.14));
+moveCur(1.6,.8,1660,560,'power2.out');
+tl.set(C1.el,{opacity:1},2.05);
+tl.fromTo(C1.ch,{opacity:0,yPercent:60,scaleY:1.4},{opacity:1,yPercent:0,scaleY:1,duration:.8,ease:'power4.out',stagger:.024,immediateRender:false},2.05);
+blurTween(tl,C1.el,2.05,28,0,.8,VERT);
+tl.to(C1.ch,{opacity:0,yPercent:70,duration:.35,ease:'power2.in',stagger:.008},3.75);
+blurTween(tl,C1.el,3.75,0,40,.45,{ease:'power2.in',...VERT});
+
+/* 4.05 - 7.1  focus: the notch reshapes, the cursor presses Start, the camera leans into the clock */
+paneOut($('#music'),4.02);
+tl.to(N,{...shape(920,520,48),duration:.7,ease:'elastic.out(1,.7)'},4.12);
+paneIn($('#focus'),4.36);
+cam(4.1,.8,topCam(1.1));
+moveCur(4.3,.75,640,488,'power3.inOut');
+click(5.05);
+tl.to('#f-start',{backgroundColor:'#6B4421',duration:.15},5.08);
+tl.set('#f-start',{textContent:'Pause'},5.1);
+cam(5.15,.9,{s:1.62,cx:760,cy:334});
+moveCur(5.2,.6,880,760,'power2.out');
+tl.set(C2.el,{opacity:1},5.35);
+tl.fromTo(C2.ch,{opacity:0,xPercent:-45},{opacity:1,xPercent:0,duration:.75,ease:'power4.out',stagger:.02,immediateRender:false},5.35);
+blurTween(tl,C2.el,5.35,50,0,.75,{ease:'power4.out'});
+cam(6.45,.7,topCam(1.08));
+tl.to(C2.ch,{opacity:0,xPercent:-60,duration:.35,ease:'power2.in',stagger:.008},6.6);
+blurTween(tl,C2.el,6.6,0,50,.45,{ease:'power2.in'});
+
+/* 7.05 - 7.7  it folds away while you work */
+paneOut($('#focus'),7.02);
+fold(7.12,.55);
+tl.to('#pillrow',{opacity:1,duration:.2},7.5);
+cam(7.1,.7,topCam(1.0));
+tl.to(CUR,{x:1500,y:900,opacity:0,duration:.6,ease:'power2.in'},7.15);
+
+/* 7.9 - 9.55  special moment: the agent is done */
+tl.set(RING,{opacity:1,scaleX:1,scaleY:1,width:300,height:54},7.9);
+tl.to(RING,{width:520,height:150,opacity:0,duration:.9,ease:'power2.out'},7.9);
+tl.to('#pool1',{scale:1.35,duration:.7,ease:'power2.out'},7.9);
+tl.to('#pool2',{scale:1.3,duration:.7,ease:'power2.out'},7.95);
+tl.to('#pillrow',{opacity:0,duration:.1},7.95);
+bloom(8.0,600,104,52,.6);
+tl.set('#agent',{opacity:1},8.12);
+tl.fromTo('#agent .face',{scale:0,rotate:-25},{scale:1,rotate:0,duration:.55,ease:'back.out(2.6)',immediateRender:false},8.12);
+tl.fromTo('#agent div',{opacity:0,x:-16},{opacity:1,x:0,duration:.4,ease:'power3.out',immediateRender:false},8.25);
+tl.fromTo('#check',{scale:0},{scale:1,duration:.4,ease:'back.out(2.4)',transformOrigin:'50% 50%',immediateRender:false},8.35);
+tl.to('#tick',{strokeDashoffset:0,duration:.35,ease:'power2.out'},8.55);
+cam(8.0,.8,topCam(1.5),'power3.out');
+tl.set(C3.el,{opacity:1},8.3);
+tl.fromTo(C3.ch,{opacity:0,scale:2.2},{opacity:1,scale:1,duration:.9,ease:'expo.out',stagger:{each:.016,from:'center'},immediateRender:false},8.3);
+blurTween(tl,C3.el,8.3,20,0,.9,{ease:'expo.out',ax:1,ay:1});
+tl.to(C3.ch,{opacity:0,yPercent:-60,duration:.35,ease:'power2.in',stagger:.006},9.3);
+blurTween(tl,C3.el,9.3,0,40,.45,{ease:'power2.in',...VERT});
+paneOut($('#agent'),9.35);
+fold(9.42,.45);
+tl.to(['#pool1','#pool2'],{scale:1,duration:1.2,ease:'sine.inOut'},9.3);
+
+/* 9.6 - 12  the cat and the wordmark, then back to a quiet pill */
+cam(9.5,1.0,{s:1,cx:960,cy:540});
+tl.to('#pillrow',{opacity:1,duration:.2},9.85);
+tl.set(MK.el,{opacity:1},9.8);
+tl.fromTo(MK.ch,{opacity:0,yPercent:70,scaleY:1.5},{opacity:1,yPercent:0,scaleY:1,duration:.85,ease:'power4.out',stagger:.04,immediateRender:false},9.8);
+blurTween(tl,MK.el,9.8,26,0,.85,VERT);
+tl.fromTo('#cat',{opacity:1,y:620,rotate:6},{y:0,rotate:0,duration:.9,ease:'back.out(1.5)',immediateRender:false},9.95);
+tl.fromTo('#meta',{opacity:0,y:20},{opacity:1,y:0,duration:.5,ease:'power3.out',immediateRender:false},10.35);
+tl.to(MK.ch,{opacity:0,yPercent:-60,duration:.35,ease:'power2.in',stagger:.02},11.3);
+blurTween(tl,MK.el,11.3,0,30,.45,{ease:'power2.in',...VERT});
+tl.to('#meta',{opacity:0,duration:.3},11.3);
+tl.to('#cat',{y:620,duration:.55,ease:'back.in(1.4)'},11.35);
+tl.set('#cat',{opacity:0},11.95);
+tl.set(CUR,{x:1560,y:980,opacity:1},11.95);
+tl.to({},{duration:.01},DURATION-.01);
+
+/* ===== per-frame state that is a pure function of t (no clock, no random) ===== */
+const rig=$('#world'), bars=$$('#cover s'), lyr=$('#lyr-col'), lyrP=$$('#lyr-col p');
+const fTime=$('#f-time'), tNow=$('#t-now'), tLeft=$('#t-left'), fill=$('#barfill');
+const tail=$('#cat .tail'), head=$('#cat .head'), grain=$('#grain'), p1=$('#pool1'), p2=$('#pool2');
+const mmss=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+const ease=x=>x<0?0:x>1?1:x*x*(3-2*x);
+function render(t){
+  rig.style.transform=`translate(${960-CAM.s*CAM.cx}px,${540-CAM.s*CAM.cy}px) scale(${CAM.s})`;
+  bars.forEach((b,i)=>{b.style.height=(26+52*Math.abs(Math.sin(t*5.2+i*1.27)*Math.cos(t*1.9+i*.6)))+'px';});
+  const pos=75+Math.max(0,t-1.4), total=225;
+  fill.style.width=(pos/total*100).toFixed(2)+'%'; tNow.textContent=mmss(pos); tLeft.textContent='-'+mmss(total-pos);
+  const step=Math.max(0,t-1.9)/.62, i=Math.floor(step), k=ease((step-i-.6)/.4);
+  lyr.style.transform=`translateY(${-(i+k)*46}px)`;
+  lyrP.forEach((p,j)=>{p.style.background=j===i+1&&t>1.9?'#F2F2F2':'#3A3A3A';});
+  const left=1500-Math.floor(Math.max(0,t-5.1));
+  fTime.textContent=mmss(left).padStart(5,'0');
+  tail.style.transform=`rotate(${Math.sin(t*3.4)*9}deg)`;
+  head.style.transform=`rotate(${Math.sin(t*1.7+.8)*2.4}deg)`;
+  grain.style.transform=`translate(${(Math.floor(t*12)%4)*37}px,${(Math.floor(t*12)%3)*29}px)`;
+  p1.style.translate=`${Math.sin(t*.42)*140}px ${Math.cos(t*.31)*90}px`;
+  p2.style.translate=`${Math.cos(t*.37)*-120}px ${Math.sin(t*.45)*80}px`;
+}
+
+/* ===== glue: fit, loop, debug, export hooks ===== */
+const stage=$('#stage');
+const fit=()=>{const s=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform=`translate(-50%,-50%) scale(${s})`;};
+addEventListener('resize',fit);fit();
+const clock=$('#clock'),scrub=$('#scrub');let scrubbing=false;
+(function frame(){const t=tl.time();render(t);clock.textContent=t.toFixed(2)+'s';
+  if(!scrubbing)scrub.value=String(t/DURATION*1000);requestAnimationFrame(frame);})();
+scrub.addEventListener('pointerdown',()=>{scrubbing=true;tl.pause();});
+addEventListener('pointerup',()=>scrubbing=false);
+scrub.addEventListener('input',()=>{tl.pause();tl.time(scrub.value/1000*DURATION);});
+addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();tl.paused()?tl.play():tl.pause();}
+  if(/^[rR]$/.test(e.key))tl.play(0);});
+if(Q.has('debug'))$('#ui').classList.add('on');
+tl.eventCallback('onComplete',()=>tl.play(0));
+const seek=t=>{tl.pause();tl.time(t,false);render(t);};
+window.OPENER={tl,DURATION,seek,W:1920,H:1080,ready:false};
+Promise.all([document.fonts.ready,...$$('img').map(i=>i.decode().catch(()=>{}))]).then(()=>{
+  window.OPENER.ready=true;if(!Q.has('clean'))tl.play(0);});
+</script>
+</body>
+</html>

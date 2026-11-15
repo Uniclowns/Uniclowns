@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="id">
+<!-- Made with the Bang Motion skill (https://github.com/bangtutorial/bang-motion) - MIT -->
+<head>
+<meta charset="utf-8">
+<title>GKKB motion</title>
+<!--
+  STYLE BRIEF
+  Theme + feeling   : website GKKB Jemaat Pontianak / calm, warm, dignified
+  Concepts          : 19 product tour with claims / 12 logo as the stage / 6 product macro -> chosen: 12 + 19
+                      (the GKKB logo is a triangle whose sides carry the three pillars, and the church's A-frame
+                       spire repeats it; the triangle can hold the building, open into the site, and close as the logo)
+  Fingerprint       : logo as stage · 4 moments · triangle with the church inside > site hero in a browser >
+                      three pillars on the triangle's corners > logo + address · a line draws the triangle ·
+                      logo and gkkbpontianak.org, then dark (loops)
+  Palette           : base #0C0A08 (site body background) / leaf green #22A04B and leaf yellow #D6DC3A (logo) /
+                      warm white #F3EEE6 (site text); red #E3262B (logo arc) used once on the underline
+  Fonts             : Instrument Serif (display, derived: dignified, calm) / Inter Tight (the site's UI font)
+  Text emphasis     : none
+  Background        : warm dark with a slow light sweep, the church photo deep and blurred, live grain
+  Motion signature  : a thin line that draws the triangle
+  Render family     : real photo + real site UI rebuilt in HTML + the real logo raster
+  Transitions       : push through the triangle into the site; the site sinks back as its pillars lift out
+  Special moment    : the three pillar words land on the triangle's corners and the logo blooms in the middle
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<style>
+:root{--base:#0C0A08;--green:#22A04B;--leaf:#D6DC3A;--white:#F3EEE6;--muted:#B9B0A4;--red:#E3262B}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;overflow:hidden}
+#filters{position:fixed;width:0;height:0}
+#stage{position:fixed;left:50%;top:50%;width:1920px;height:1080px;transform:translate(-50%,-50%);
+  overflow:hidden;background:var(--base);font-family:"Inter Tight",sans-serif;color:var(--white)}
+#world{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;will-change:transform}
+
+.bgphoto{position:absolute;inset:-120px;background:url(assets/gereja.jpg) center/cover;filter:blur(38px) saturate(.7);opacity:.10}
+#sweep{position:absolute;left:-600px;top:-600px;width:2200px;height:2200px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(214,170,110,.20) 0%,rgba(214,170,110,.07) 35%,transparent 62%)}
+#glow2{position:absolute;width:1400px;height:1400px;border-radius:50%;left:900px;top:300px;pointer-events:none;
+  background:radial-gradient(circle,rgba(34,160,75,.12) 0%,transparent 60%)}
+.grain{position:absolute;left:-200px;top:-200px;width:2400px;height:1500px;opacity:.10;mix-blend-mode:screen;pointer-events:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 .95  0 0 0 0 .88  0 0 0 .6 0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>")}
+
+/* scene A: the triangle holding the church */
+#sceneA{position:absolute;left:0;top:0;width:1920px;height:1080px}
+#sceneA svg{position:absolute;left:0;top:0}
+
+/* scene C: the site in a browser window */
+#win{position:absolute;left:210px;top:96px;width:1500px;height:880px;border-radius:24px;overflow:hidden;opacity:0;
+  background:#0C0A08;box-shadow:0 40px 120px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08)}
+#chrome{position:absolute;left:0;top:0;right:0;height:62px;background:#1B1814;display:flex;align-items:center;padding:0 24px;gap:10px}
+#chrome i{width:15px;height:15px;border-radius:50%;background:#3A352F}
+#url{margin-left:24px;flex:1;height:40px;border-radius:20px;background:#0F0D0B;display:flex;align-items:center;gap:12px;
+  padding:0 20px;font-size:21px;color:#D8D0C4}
+#url svg{fill:#9A9186}
+#view{position:absolute;left:0;top:62px;right:0;bottom:0;overflow:hidden}
+#hero{position:absolute;left:0;top:0;width:1500px;height:818px;background:url(assets/gereja.jpg) 62% 30%/cover}
+#hero::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(12,10,8,.55) 0%,rgba(12,10,8,.62) 45%,rgba(12,10,8,.88) 100%)}
+#hero > *{position:absolute;z-index:1}
+#nav{left:56px;right:56px;top:34px;display:flex;align-items:center;gap:16px;font-size:27px;font-weight:600;letter-spacing:-.01em}
+#nav img{width:56px;height:56px}
+#menu{margin-left:auto;background:#fff;color:#111;border-radius:30px;padding:12px 26px;font-size:24px;font-weight:500}
+#h1{left:58px;top:212px;font-size:84px;font-weight:500;line-height:1.04;letter-spacing:-.035em;white-space:nowrap}
+#h1 .ln{display:block;overflow:visible}
+#h1 .w{display:inline-block;opacity:0}
+#sub{left:60px;top:410px;font-size:27px;color:#E2DBD0;opacity:0;white-space:nowrap}
+#btns{left:60px;top:486px;display:flex;align-items:center;gap:40px;opacity:0}
+#btns b{background:#fff;color:#111;border-radius:40px;padding:20px 36px;font-size:26px;font-weight:500}
+#btns u{font-size:26px;text-underline-offset:10px;text-decoration-color:rgba(255,255,255,.4)}
+#pillars{left:60px;right:60px;top:640px;display:flex}
+#pillars div{flex:1;padding-right:30px;border-left:1px solid rgba(255,255,255,.22);padding-left:34px;opacity:0}
+#pillars div:first-child{border-left:none;padding-left:0}
+#pillars h4{font-size:30px;font-weight:600;margin-bottom:14px}
+#pillars p{font-size:23px;color:#D7CFC2}
+
+/* scene D/E: the three pillars on the triangle, then the logo and the address */
+#sceneD{position:absolute;inset:0}
+#sceneD svg{position:absolute;left:0;top:0}
+#logo{position:absolute;left:810px;top:493px;width:300px;height:300px;opacity:0}
+.pl{position:absolute;font-family:"Instrument Serif",serif;font-size:76px;line-height:1;white-space:nowrap;opacity:0}
+.cap{position:absolute;font-family:"Instrument Serif",serif;font-size:96px;line-height:1.05;white-space:nowrap;opacity:0;
+  text-shadow:0 4px 30px rgba(0,0,0,.55)}
+#labels{position:absolute;inset:0;pointer-events:none}
+.wd{display:inline-block;white-space:nowrap}.ch{display:inline-block;opacity:0}
+
+#ui{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:none;gap:12px;align-items:center;
+  padding:10px 16px;border-radius:14px;background:rgba(14,16,22,.9);color:#aaa;font:13px sans-serif;z-index:9}
+#ui.on{display:flex}#ui input{width:360px}
+</style>
+</head>
+<body>
+<svg id="filters"><defs></defs></svg>
+<div id="stage">
+  <div id="world">
+    <div class="bgphoto"></div>
+    <div id="sweep"></div>
+    <div id="glow2"></div>
+    <div class="grain" id="grain"></div>
+
+    <div id="sceneA">
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+        <defs><clipPath id="triClip"><polygon points="960,150 630,760 1290,760"/></clipPath></defs>
+        <g clip-path="url(#triClip)">
+          <image id="triPhoto" href="assets/gereja.jpg" x="39" y="-88" width="1872" height="1053" preserveAspectRatio="none" opacity="0"/>
+        </g>
+        <polygon id="triLine" points="960,150 630,760 1290,760" fill="none" stroke="#D6DC3A" stroke-width="3.5"
+          stroke-linejoin="round" stroke-dasharray="2000" stroke-dashoffset="2000"/>
+      </svg>
+    </div>
+
+    <div id="win">
+      <div id="chrome"><i></i><i></i><i></i>
+        <div id="url"><svg width="18" height="20" viewBox="0 0 18 20"><path d="M4 8V6a5 5 0 0110 0v2h1.5A1.5 1.5 0 0117 9.5v8a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 011 17.5v-8A1.5 1.5 0 012.5 8zM6 8h6V6a3 3 0 00-6 0z"/></svg>gkkbpontianak.org</div>
+      </div>
+      <div id="view">
+        <div id="hero">
+          <div id="nav"><img src="assets/logo.png" alt="">GKKB Pontianak<span id="menu">Menu &nbsp;=</span></div>
+          <h1 id="h1"><span class="ln"><span class="w">Gereja</span> <span class="w">yang</span> <span class="w">diperbarui,</span></span><span class="ln"><span class="w">berpusat</span> <span class="w">pada</span> <span class="w">Alkitab</span></span></h1>
+          <div id="sub">GKKB Jemaat Pontianak · 西加基督教會坤甸堂會 · melayani sejak 6 Juni 1935</div>
+          <div id="btns"><b>Tonton Ibadah Online</b><u>Baca renungan minggu ini</u></div>
+          <div id="pillars">
+            <div><h4>Berkomitmen</h4><p>Murid Kristus yang setia</p></div>
+            <div><h4>Bertumbuh</h4><p>Berakar dalam Firman Tuhan</p></div>
+            <div><h4>Bersaksi</h4><p>Bagi Pontianak dan sekitarnya</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="sceneD">
+      <svg width="1920" height="1080" viewBox="0 0 1920 1080">
+        <polygon id="triD" points="960,236 600,846 1320,846" fill="none" stroke="#D6DC3A" stroke-width="3"
+          stroke-linejoin="round" stroke-dasharray="2140" stroke-dashoffset="2140"/>
+        <line id="under" x1="640" y1="800" x2="1280" y2="800" stroke="#E3262B" stroke-width="4" stroke-linecap="round"
+          stroke-dasharray="640" stroke-dashoffset="640"/>
+      </svg>
+      <img id="logo" src="assets/logo.png" alt="">
+      <div class="pl" id="pl1" style="left:960px;top:120px;transform:translateX(-50%)">Bertumbuh</div>
+      <div class="pl" id="pl2" style="left:560px;top:880px;transform:translateX(-100%)">Berkomitmen</div>
+      <div class="pl" id="pl3" style="left:1360px;top:880px">Bersaksi</div>
+    </div>
+  </div>
+
+  <div id="labels">
+    <div class="cap" id="capA" style="left:960px;top:850px;transform:translateX(-50%)"><span class="txt">Melayani sejak 6 Juni 1935</span></div>
+    <div class="cap" id="capE" style="left:960px;top:650px;transform:translateX(-50%);font-size:120px"><span class="txt">gkkbpontianak.org</span></div>
+  </div>
+</div>
+<div id="ui"><input id="scrub" type="range" min="0" max="1000" value="0"><span id="clock">0.00s</span></div>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const Q=new URLSearchParams(location.search);
+const defs=$('#filters defs'); let fc=0;
+function makeBlur(){const id='mb'+(fc++),NS='http://www.w3.org/2000/svg';
+  const f=document.createElementNS(NS,'filter');f.id=id;f.setAttribute('x','-70%');f.setAttribute('y','-70%');
+  f.setAttribute('width','240%');f.setAttribute('height','240%');
+  const g=document.createElementNS(NS,'feGaussianBlur');g.setAttribute('stdDeviation','0 0');f.appendChild(g);defs.appendChild(f);
+  return {url:`url(#${id})`,node:g};}
+function blurTween(tl,el,at,from,to,dur,{ease='power3.out',ax=1,ay=.08}={}){const b=makeBlur(),o={v:from};
+  tl.set(el,{filter:b.url},at);
+  tl.to(o,{v:to,duration:dur,ease,onUpdate(){b.node.setAttribute('stdDeviation',`${(o.v*ax).toFixed(2)} ${(o.v*ay).toFixed(2)}`);}},at);
+  tl.set(el,{filter:'none'},at+dur);}
+function splitChars(el){const words=(el.textContent||'').split(' ');el.textContent='';const out=[];
+  words.forEach((w,i)=>{const wr=document.createElement('span');wr.className='wd';
+    for(const c of w){const s=document.createElement('span');s.className='ch';s.textContent=c;wr.appendChild(s);out.push(s);}
+    el.appendChild(wr);if(i<words.length-1){const sp=document.createElement('span');sp.className='ch';sp.innerHTML='&nbsp;';el.appendChild(sp);out.push(sp);}});
+  return out;}
+const VERT={ax:.1,ay:1};
+
+const DURATION=12;
+const tl=gsap.timeline({paused:true});
+const CAM={cx:960,cy:540,s:1};
+const cam=(at,dur,v,ease='power3.inOut')=>tl.to(CAM,{...v,duration:dur,ease},at);
+const capA={el:$('#capA'),ch:splitChars($('#capA .txt'))}, capE={el:$('#capE'),ch:splitChars($('#capE .txt'))};
+
+/* ===== start (= end): an empty warm dark ===== */
+tl.set(CAM,{cx:960,cy:540,s:1},0);
+tl.set('#sceneA',{opacity:1,scale:1,transformOrigin:'960px 600px'},0);
+tl.set('#triLine',{attr:{'stroke-dashoffset':2000},opacity:1},0);
+tl.set('#triPhoto',{opacity:0},0);
+tl.set('#win',{opacity:0,scale:1,filter:'none'},0);
+tl.set('#sceneD',{opacity:1},0);
+cam(0,2.8,{s:1.06,cx:960,cy:500},'sine.inOut');
+
+/* 0.2 - 2.8  a line draws the triangle; the church's A-frame spire fills it */
+tl.to('#triLine',{attr:{'stroke-dashoffset':0},duration:1.6,ease:'power2.inOut'},.2);
+tl.fromTo('#triPhoto',{opacity:0,attr:{y:-40}},{opacity:1,attr:{y:-88},duration:1.4,ease:'power2.out',immediateRender:false},.9);
+tl.set(capA.el,{opacity:1},1.35);
+tl.set(capA.ch,{opacity:1},1.35);
+tl.fromTo(capA.el,{clipPath:'inset(0% 100% 0% 0%)'},{clipPath:'inset(0% 0% 0% 0%)',duration:.9,ease:'power3.inOut',immediateRender:false},1.35);
+tl.to(capA.ch,{opacity:0,yPercent:-60,duration:.35,ease:'power2.in',stagger:.01},2.35);
+blurTween(tl,capA.el,2.35,0,40,.45,{ease:'power2.in',...VERT});
+
+/* 2.4 - 3.0  push through the triangle, into the site */
+tl.to('#sceneA',{scale:6,duration:.6,ease:'power2.in'},2.4);
+tl.to('#triLine',{opacity:0,duration:.3},2.6);
+tl.set('#sceneA',{opacity:0},3.0);
+tl.set('#win',{opacity:1},3.0);
+tl.set(CAM,{s:1.9,cx:1100,cy:500},3.0);
+cam(3.0,.9,{s:1.12,cx:960,cy:520},'power3.out');
+
+/* 3.2 - 6.4  the hero builds; the camera leans into the headline, then steps back */
+tl.fromTo('#nav',{opacity:0,y:-20},{opacity:1,y:0,duration:.5,ease:'power3.out',immediateRender:false},3.2);
+tl.fromTo('#h1 .w',{opacity:0,yPercent:45,rotateX:-60},{opacity:1,yPercent:0,rotateX:0,duration:.6,ease:'back.out(1.5)',stagger:.11,immediateRender:false},3.35);
+tl.fromTo('#sub',{opacity:0,y:16},{opacity:1,y:0,duration:.5,ease:'power3.out',immediateRender:false},4.1);
+tl.fromTo('#btns',{opacity:0,y:16},{opacity:1,y:0,duration:.5,ease:'power3.out',immediateRender:false},4.3);
+tl.fromTo('#btns b',{scale:.9},{scale:1,duration:.6,ease:'back.out(2.4)',immediateRender:false},4.3);
+cam(3.95,.9,{s:1.5,cx:720,cy:430});
+tl.fromTo('#pillars div',{opacity:0,y:24},{opacity:1,y:0,duration:.5,ease:'power3.out',stagger:.14,immediateRender:false},4.9);
+cam(5.1,1.0,{s:.98,cx:960,cy:540});
+tl.to('#win',{rotationX:6,rotationY:-5,transformPerspective:2200,duration:1.2,ease:'sine.inOut'},5.1);
+
+/* 6.4 - 9.0  special moment: the pillars lift out onto the triangle; the logo blooms in the middle */
+tl.to('#win',{scale:.84,opacity:0,duration:.7,ease:'power2.in'},6.35);
+tl.to('#win',{filter:'blur(10px)',duration:.7,ease:'power2.in'},6.35);
+cam(6.35,.8,{s:1,cx:960,cy:540});
+['#pl2','#pl1','#pl3'].forEach((id,i)=>{
+  tl.fromTo(id,{opacity:0,y:60},{opacity:1,y:0,duration:.7,ease:'power4.out',immediateRender:false},6.7+i*.16);
+  blurTween(tl,$(id),6.7+i*.16,26,0,.7,VERT);});
+tl.to('#triD',{attr:{'stroke-dashoffset':0},duration:1.0,ease:'power2.inOut'},7.05);
+tl.fromTo('#logo',{opacity:0,scale:.2,rotate:-40},{opacity:1,scale:1,rotate:0,duration:.8,ease:'back.out(1.7)',immediateRender:false},7.85);
+tl.to('#glow2',{scale:1.4,duration:.8,ease:'power2.out'},7.85);
+
+/* 9.0 - 12  the logo and the address */
+tl.to(['#pl1','#pl2','#pl3'],{opacity:0,y:-30,duration:.45,ease:'power2.in',stagger:.06},9.0);
+tl.to('#triD',{opacity:0,scale:.42,transformOrigin:'960px 643px',duration:.6,ease:'power2.in'},9.05);
+tl.to('#logo',{y:-290,scale:.82,duration:.8,ease:'power3.inOut'},9.15);
+tl.set(capE.el,{opacity:1},9.55);
+tl.fromTo(capE.ch,{opacity:0,yPercent:60,scaleY:1.4},{opacity:1,yPercent:0,scaleY:1,duration:.8,ease:'power4.out',stagger:.03,immediateRender:false},9.55);
+blurTween(tl,capE.el,9.55,26,0,.8,VERT);
+tl.to('#under',{attr:{'stroke-dashoffset':0},duration:.7,ease:'power3.inOut'},10.15);
+tl.to('#glow2',{scale:1,duration:1.4,ease:'sine.inOut'},9.6);
+tl.to([capE.el,'#logo','#under'],{opacity:0,duration:.5,ease:'power2.in'},11.35);
+tl.set('#sceneA',{opacity:1,scale:1},11.95);
+tl.set('#triD',{opacity:1,scale:1,attr:{'stroke-dashoffset':2140}},11.95);
+tl.set('#under',{opacity:1,attr:{'stroke-dashoffset':640}},11.95);
+tl.set('#logo',{opacity:0,y:0,scale:1},11.95);
+tl.set(capE.el,{opacity:0},11.95);
+tl.to({},{duration:.01},DURATION-.01);
+
+/* ===== per-frame state as a pure function of t ===== */
+const rig=$('#world'), sweep=$('#sweep'), grain=$('#grain');
+function render(t){
+  rig.style.transform=`translate(${960-CAM.s*CAM.cx}px,${540-CAM.s*CAM.cy}px) scale(${CAM.s})`;
+  sweep.style.translate=`${Math.sin(t*.32)*520+260}px ${Math.cos(t*.27)*300}px`;
+  grain.style.transform=`translate(${(Math.floor(t*12)%4)*37}px,${(Math.floor(t*12)%3)*29}px)`;
+}
+
+const stage=$('#stage');
+const fit=()=>{const s=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform=`translate(-50%,-50%) scale(${s})`;};
+addEventListener('resize',fit);fit();
+const clock=$('#clock'),scrub=$('#scrub');let scrubbing=false;
+(function frame(){const t=tl.time();render(t);clock.textContent=t.toFixed(2)+'s';
+  if(!scrubbing)scrub.value=String(t/DURATION*1000);requestAnimationFrame(frame);})();
+scrub.addEventListener('pointerdown',()=>{scrubbing=true;tl.pause();});
+addEventListener('pointerup',()=>scrubbing=false);
+scrub.addEventListener('input',()=>{tl.pause();tl.time(scrub.value/1000*DURATION);});
+addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();tl.paused()?tl.play():tl.pause();}
+  if(/^[rR]$/.test(e.key))tl.play(0);});
+if(Q.has('debug'))$('#ui').classList.add('on');
+tl.eventCallback('onComplete',()=>tl.play(0));
+const seek=t=>{tl.pause();tl.time(t,false);render(t);};
+window.OPENER={tl,DURATION,seek,W:1920,H:1080,ready:false};
+Promise.all([document.fonts.ready,...$$('img').map(i=>i.decode().catch(()=>{}))]).then(()=>{
+  window.OPENER.ready=true;if(!Q.has('clean'))tl.play(0);});
+</script>
+</body>
+</html>
